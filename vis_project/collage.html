@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Collage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        .collage {
+            position: relative;
+            width: 100%;
+            height: 80vh;
+            border: 1px solid #ddd;
+            overflow: hidden;
+        }
+        .collage img {
+            position: absolute;
+            max-width: 200px;
+            max-height: 200px;
+            cursor: grab;
+        }
+        .image-container {
+            position: absolute;
+            display: inline-block;
+        }
+        .tooltip {
+            visibility: hidden;
+            background-color: black;
+            color: white;
+            text-align: center;
+            border-radius: 5px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .image-container:hover .tooltip {
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+    <h1>Photo Collage</h1>
+    <div class="collage" id="photoCollage"></div>
+    <button onclick="window.location.href='index.html'">Upload More Photos</button>
+
+    <script>
+        let activeImage = null;
+        let isDragging = false;
+
+        function loadPhotos() {
+            const collage = document.getElementById('photoCollage');
+            const images = JSON.parse(localStorage.getItem('uploadedImages')) || [];
+            
+            images.forEach(({ src, text }) => {
+                const container = document.createElement('div');
+                container.classList.add('image-container');
+                container.style.left = Math.random() * (collage.clientWidth - 200) + 'px';
+                container.style.top = Math.random() * (collage.clientHeight - 200) + 'px';
+                
+                const img = document.createElement('img');
+                img.src = src;
+                img.draggable = false;
+                img.addEventListener('mousedown', startDrag);
+                img.addEventListener('mouseup', stopDrag);
+                
+                const tooltip = document.createElement('div');
+                tooltip.classList.add('tooltip');
+                tooltip.textContent = text;
+                
+                container.appendChild(img);
+                container.appendChild(tooltip);
+                collage.appendChild(container);
+            });
+        }
+        
+        function startDrag(event) {
+            activeImage = event.target;
+            isDragging = true;
+            let shiftX = event.clientX - activeImage.getBoundingClientRect().left;
+            let shiftY = event.clientY - activeImage.getBoundingClientRect().top;
+            
+            function moveAt(pageX, pageY) {
+                activeImage.parentElement.style.left = pageX - shiftX + 'px';
+                activeImage.parentElement.style.top = pageY - shiftY + 'px';
+            }
+            
+            function onMouseMove(event) {
+                if (isDragging) {
+                    moveAt(event.pageX, event.pageY);
+                }
+            }
+            
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', function stopDragging() {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', stopDragging);
+                isDragging = false;
+                activeImage = null;
+            });
+        }
+
+        function stopDrag() {
+            isDragging = false;
+        }
+        
+        document.addEventListener('dragstart', event => event.preventDefault());
+        window.onload = loadPhotos;
+    </script>
+</body>
+</html>

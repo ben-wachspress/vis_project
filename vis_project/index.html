@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Photos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        .upload-container {
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+        <h1>Upload Your Photos</h1>
+        <input type="file" id="fileInput" multiple accept="image/*">
+        <input type="text" id="imageText" placeholder="Enter text for the image">
+        <button onclick="savePhotos()">Upload and View Collage</button>
+        <button onclick="window.location.href='collage.html'">Go to Collage</button>
+    </div>
+
+    <script>
+        function resizeImage(file, maxWidth, maxHeight, callback) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function(event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > maxWidth || height > maxHeight) {
+                        const scale = Math.min(maxWidth / width, maxHeight / height);
+                        width *= scale;
+                        height *= scale;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    callback(canvas.toDataURL('image/jpeg', 0.7));
+                };
+            };
+        }
+
+        function savePhotos() {
+            const input = document.getElementById('fileInput');
+            const textInput = document.getElementById('imageText');
+            const files = Array.from(input.files);
+            
+            if (files.length === 0) {
+                alert("Please select at least one image.");
+                return;
+            }
+            
+            const images = [];
+            let processed = 0;
+            
+            files.forEach(file => {
+                resizeImage(file, 800, 800, (resizedDataUrl) => {
+                    images.push({ src: resizedDataUrl, text: textInput.value });
+                    processed++;
+                    if (processed === files.length) {
+                        localStorage.setItem('uploadedImages', JSON.stringify(images));
+                        window.location.href = 'collage.html';
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>
